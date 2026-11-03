@@ -1,0 +1,48 @@
+{
+  "scenario_id": "coastal_bay",
+  "name": "Coastal Bay Harbor",
+  "description": "Seaside coastal geography where coastal highways and low-lying marinas face high-tide cyclone storm surge and flooding, necessitating evacuation to elevated hill shelters.",
+  "center": { "lat": 12.9800, "lng": 80.2500, "zoom": 13 },
+  "nodes": [
+    { "id": "C_Z1", "name": "Marina Fishing Port", "lat": 12.9850, "lng": 80.2650, "type": "zone", "population": 3800, "description": "Low-lying fishing community directly at sea level" },
+    { "id": "C_Z2", "name": "Coastal Resort Boulevard", "lat": 12.9720, "lng": 80.2600, "type": "zone", "population": 2900, "description": "Tourist hotels and beach apartments" },
+    { "id": "C_Z3", "name": "Harbor Container Terminal", "lat": 12.9920, "lng": 80.2580, "type": "zone", "population": 1800, "description": "Port workers and cargo logistics depot" },
+    { "id": "C_Z4", "name": "Old Lighthouse Village", "lat": 12.9600, "lng": 80.2530, "type": "zone", "population": 2400, "description": "Vulnerable seaside village" },
+
+    { "id": "C_J1", "name": "Harbor Gate Crossing", "lat": 12.9880, "lng": 80.2480, "type": "junction", "population": 0, "description": "Access bridge off terminal" },
+    { "id": "C_J2", "name": "Mid-Coast Bypass", "lat": 12.9750, "lng": 80.2460, "type": "junction", "population": 0, "description": "Expressway interchange" },
+    { "id": "C_J3", "name": "South Coast Viaduct", "lat": 12.9620, "lng": 80.2420, "type": "junction", "population": 0, "description": "Elevated coastal viaduct ramp" },
+    { "id": "C_J4", "name": "Central Ridge Circle", "lat": 12.9800, "lng": 80.2350, "type": "junction", "population": 0, "description": "Rotary leading up to hills" },
+
+    { "id": "C_S1", "name": "Mount Ridge High Shelter", "lat": 12.9900, "lng": 80.2250, "type": "shelter", "capacity": 6000, "current_occupancy": 0, "description": "Elevated ridge sanctuary at 120m altitude" },
+    { "id": "C_S2", "name": "Inland Sports Arena", "lat": 12.9650, "lng": 80.2200, "type": "shelter", "capacity": 5500, "current_occupancy": 0, "description": "Concrete domed facility with helipad" }
+  ],
+  "edges": [
+    { "id": "CE1", "source": "C_Z3", "target": "C_J1", "distance_km": 1.2, "capacity_flow": 1400, "speed_kmh": 45 },
+    { "id": "CE2", "source": "C_Z1", "target": "C_J1", "distance_km": 1.7, "capacity_flow": 1200, "speed_kmh": 40 },
+    { "id": "CE3", "source": "C_Z1", "target": "C_J2", "distance_km": 1.8, "capacity_flow": 1100, "speed_kmh": 40 },
+    { "id": "CE4", "source": "C_Z2", "target": "C_J2", "distance_km": 1.4, "capacity_flow": 1300, "speed_kmh": 45 },
+    { "id": "CE5", "source": "C_Z2", "target": "C_J3", "distance_km": 1.6, "capacity_flow": 900, "speed_kmh": 35 },
+    { "id": "CE6", "source": "C_Z4", "target": "C_J3", "distance_km": 1.1, "capacity_flow": 1000, "speed_kmh": 40 },
+    { "id": "CE7", "source": "C_J1", "target": "C_J4", "distance_km": 1.6, "capacity_flow": 1800, "speed_kmh": 50 },
+    { "id": "CE8", "source": "C_J2", "target": "C_J4", "distance_km": 1.2, "capacity_flow": 1600, "speed_kmh": 50 },
+    { "id": "CE9", "source": "C_J3", "target": "C_J4", "distance_km": 2.2, "capacity_flow": 1200, "speed_kmh": 45 },
+    { "id": "CE10", "source": "C_J1", "target": "C_S1", "distance_km": 2.4, "capacity_flow": 2200, "speed_kmh": 60 },
+    { "id": "CE11", "source": "C_J4", "target": "C_S1", "distance_km": 1.5, "capacity_flow": 2000, "speed_kmh": 55 },
+    { "id": "CE12", "source": "C_J4", "target": "C_S2", "distance_km": 2.1, "capacity_flow": 1900, "speed_kmh": 55 },
+    { "id": "CE13", "source": "C_J3", "target": "C_S2", "distance_km": 2.3, "capacity_flow": 1500, "speed_kmh": 50 },
+    { "id": "CE14", "source": "C_Z1", "target": "C_Z2", "distance_km": 1.6, "capacity_flow": 800, "speed_kmh": 35 }
+  ],
+  "disasters": [
+    {
+      "id": "DIS_COAST_1",
+      "type": "flood",
+      "name": "Cyclone Storm Surge & High Tide",
+      "lat": 12.9750,
+      "lng": 80.2620,
+      "radius_km": 1.3,
+      "severity": 0.9,
+      "description": "Massive seawater intrusion submerging shoreline roads and cut off low-lying marinas."
+    }
+  ]
+}

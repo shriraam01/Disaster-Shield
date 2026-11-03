@@ -1,0 +1,47 @@
+{
+  "scenario_id": "valley_basin",
+  "name": "Mountain Valley Basin",
+  "description": "Topography characterized by winding mountain passes, gorge bridges, and vulnerability to seismic fault tremors and canyon forest wildfires.",
+  "center": { "lat": 13.1200, "lng": 80.1800, "zoom": 13 },
+  "nodes": [
+    { "id": "V_Z1", "name": "Pine Valley Village", "lat": 13.1350, "lng": 80.1900, "type": "zone", "population": 2200, "description": "Highland community near pine forest" },
+    { "id": "V_Z2", "name": "Canyon Foothills Township", "lat": 13.1180, "lng": 80.1980, "type": "zone", "population": 3100, "description": "Settlement situated along seismic fault line" },
+    { "id": "V_Z3", "name": "Riverbend Outpost", "lat": 13.1020, "lng": 80.1850, "type": "zone", "population": 1900, "description": "Low valley outpost near canyon bridge" },
+    { "id": "V_Z4", "name": "Western Mine Community", "lat": 13.1380, "lng": 80.1700, "type": "zone", "population": 1500, "description": "Remote mountain mining sector" },
+
+    { "id": "V_J1", "name": "North Pass Junction", "lat": 13.1300, "lng": 80.1780, "type": "junction", "population": 0, "description": "Junction between mining road and valley" },
+    { "id": "V_J2", "name": "Gorge Suspension Bridge", "lat": 13.1150, "lng": 80.1880, "type": "junction", "population": 0, "description": "Single-span gorge crossing - critical bottleneck" },
+    { "id": "V_J3", "name": "South Valley Roundabout", "lat": 13.1050, "lng": 80.1750, "type": "junction", "population": 0, "description": "Southern gateway into plain" },
+    { "id": "V_J4", "name": "Central Ridge Checkpoint", "lat": 13.1220, "lng": 80.1750, "type": "junction", "population": 0, "description": "Ridge checkpoint with bypass roads" },
+
+    { "id": "V_S1", "name": "Plateau Military Base Sanctuary", "lat": 13.1420, "lng": 80.1550, "type": "shelter", "capacity": 5000, "current_occupancy": 0, "description": "Reinforced high-plateau military cantonment" },
+    { "id": "V_S2", "name": "Plains Regional Evacuation Center", "lat": 13.0950, "lng": 80.1600, "type": "shelter", "capacity": 6000, "current_occupancy": 0, "description": "Open ground regional emergency pavilion" }
+  ],
+  "edges": [
+    { "id": "VE1", "source": "V_Z4", "target": "V_J1", "distance_km": 1.3, "capacity_flow": 800, "speed_kmh": 35 },
+    { "id": "VE2", "source": "V_Z1", "target": "V_J1", "distance_km": 1.5, "capacity_flow": 1000, "speed_kmh": 40 },
+    { "id": "VE3", "source": "V_Z1", "target": "V_J2", "distance_km": 2.1, "capacity_flow": 900, "speed_kmh": 35 },
+    { "id": "VE4", "source": "V_Z2", "target": "V_J2", "distance_km": 1.2, "capacity_flow": 1200, "speed_kmh": 40 },
+    { "id": "VE5", "source": "V_Z3", "target": "V_J2", "distance_km": 1.4, "capacity_flow": 900, "speed_kmh": 35 },
+    { "id": "VE6", "source": "V_Z3", "target": "V_J3", "distance_km": 1.3, "capacity_flow": 1100, "speed_kmh": 40 },
+    { "id": "VE7", "source": "V_J1", "target": "V_J4", "distance_km": 1.1, "capacity_flow": 1400, "speed_kmh": 45 },
+    { "id": "VE8", "source": "V_J2", "target": "V_J4", "distance_km": 1.6, "capacity_flow": 1100, "speed_kmh": 40 },
+    { "id": "VE9", "source": "V_J4", "target": "V_J3", "distance_km": 2.0, "capacity_flow": 1300, "speed_kmh": 45 },
+    { "id": "VE10", "source": "V_J1", "target": "V_S1", "distance_km": 2.6, "capacity_flow": 1800, "speed_kmh": 50 },
+    { "id": "VE11", "source": "V_J4", "target": "V_S1", "distance_km": 2.9, "capacity_flow": 1500, "speed_kmh": 50 },
+    { "id": "VE12", "source": "V_J3", "target": "V_S2", "distance_km": 1.9, "capacity_flow": 2000, "speed_kmh": 55 },
+    { "id": "VE13", "source": "V_J4", "target": "V_S2", "distance_km": 3.2, "capacity_flow": 1600, "speed_kmh": 50 }
+  ],
+  "disasters": [
+    {
+      "id": "DIS_VALLEY_1",
+      "type": "earthquake",
+      "name": "Fault Rupture & Landslide",
+      "lat": 13.1160,
+      "lng": 80.1900,
+      "radius_km": 1.2,
+      "severity": 0.88,
+      "description": "Seismic fault displacement triggering rockfalls and damaging the Gorge Bridge."
+    }
+  ]
+}

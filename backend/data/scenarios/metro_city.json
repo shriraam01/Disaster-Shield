@@ -1,0 +1,59 @@
+{
+  "scenario_id": "metro_city",
+  "name": "Metropolis Central Grid",
+  "description": "Dense urban network with high-density population zones, central river bridges, and strategically placed emergency shelters.",
+  "center": { "lat": 13.0827, "lng": 80.2707, "zoom": 13 },
+  "nodes": [
+    { "id": "Z1", "name": "Downtown Financial Center", "lat": 13.0850, "lng": 80.2750, "type": "zone", "population": 3200, "description": "High-density commercial hub" },
+    { "id": "Z2", "name": "Old Town Residential", "lat": 13.0950, "lng": 80.2680, "type": "zone", "population": 4500, "description": "Narrow streets, high residential density" },
+    { "id": "Z3", "name": "Riverside Wharf", "lat": 13.0780, "lng": 80.2650, "type": "zone", "population": 2800, "description": "Waterfront district prone to flash floods" },
+    { "id": "Z4", "name": "Tech Industrial Park", "lat": 13.0650, "lng": 80.2550, "type": "zone", "population": 2100, "description": "Southern tech campus" },
+    { "id": "Z5", "name": "Market Square District", "lat": 13.0900, "lng": 80.2850, "type": "zone", "population": 3600, "description": "Crowded commercial and transit plaza" },
+
+    { "id": "J1", "name": "North Central Junction", "lat": 13.0920, "lng": 80.2580, "type": "junction", "population": 0, "description": "Highway 4 interchange" },
+    { "id": "J2", "name": "Grand River Bridge North", "lat": 13.0830, "lng": 80.2600, "type": "junction", "population": 0, "description": "Northern arterial river crossing" },
+    { "id": "J3", "name": "Grand River Bridge South", "lat": 13.0720, "lng": 80.2620, "type": "junction", "population": 0, "description": "Southern arterial river crossing" },
+    { "id": "J4", "name": "East Ring Intersection", "lat": 13.0800, "lng": 80.2880, "type": "junction", "population": 0, "description": "Ring expressway cloverleaf" },
+    { "id": "J5", "name": "South Expressway Interchange", "lat": 13.0600, "lng": 80.2700, "type": "junction", "population": 0, "description": "Beltway interchange" },
+    { "id": "J6", "name": "Central Boulevard Hub", "lat": 13.0870, "lng": 80.2700, "type": "junction", "population": 0, "description": "Main boulevard connection point" },
+
+    { "id": "S1", "name": "Northern Metro Stadium Shelter", "lat": 13.1020, "lng": 80.2500, "type": "shelter", "capacity": 6500, "current_occupancy": 0, "description": "Fortified sports complex on high ground" },
+    { "id": "S2", "name": "State General Hospital & Bunker", "lat": 13.0680, "lng": 80.2920, "type": "shelter", "capacity": 5000, "current_occupancy": 0, "description": "Medical super-center with auxiliary disaster wards" },
+    { "id": "S3", "name": "West Highland University Camp", "lat": 13.0750, "lng": 80.2400, "type": "shelter", "capacity": 7000, "current_occupancy": 0, "description": "Sprawling university grounds outside flood plain" }
+  ],
+  "edges": [
+    { "id": "E1", "source": "Z2", "target": "J1", "distance_km": 1.4, "capacity_flow": 1200, "speed_kmh": 45 },
+    { "id": "E2", "source": "Z2", "target": "J6", "distance_km": 1.0, "capacity_flow": 900, "speed_kmh": 40 },
+    { "id": "E3", "source": "J1", "target": "S1", "distance_km": 1.5, "capacity_flow": 2200, "speed_kmh": 60 },
+    { "id": "E4", "source": "J1", "target": "J2", "distance_km": 1.1, "capacity_flow": 1400, "speed_kmh": 50 },
+    { "id": "E5", "source": "J6", "target": "Z1", "distance_km": 0.8, "capacity_flow": 1100, "speed_kmh": 35 },
+    { "id": "E6", "source": "J6", "target": "J2", "distance_km": 1.2, "capacity_flow": 1300, "speed_kmh": 40 },
+    { "id": "E7", "source": "Z1", "target": "Z5", "distance_km": 1.2, "capacity_flow": 1000, "speed_kmh": 35 },
+    { "id": "E8", "source": "Z1", "target": "J4", "distance_km": 1.5, "capacity_flow": 1500, "speed_kmh": 50 },
+    { "id": "E9", "source": "Z5", "target": "J4", "distance_km": 1.3, "capacity_flow": 1100, "speed_kmh": 45 },
+    { "id": "E10", "source": "J2", "target": "S3", "distance_km": 2.3, "capacity_flow": 2000, "speed_kmh": 60 },
+    { "id": "E11", "source": "J2", "target": "Z3", "distance_km": 0.9, "capacity_flow": 900, "speed_kmh": 35 },
+    { "id": "E12", "source": "Z3", "target": "J3", "distance_km": 0.8, "capacity_flow": 1100, "speed_kmh": 40 },
+    { "id": "E13", "source": "J3", "target": "S3", "distance_km": 2.5, "capacity_flow": 1800, "speed_kmh": 55 },
+    { "id": "E14", "source": "J3", "target": "Z4", "distance_km": 1.2, "capacity_flow": 1200, "speed_kmh": 45 },
+    { "id": "E15", "source": "Z4", "target": "J5", "distance_km": 1.7, "capacity_flow": 1400, "speed_kmh": 50 },
+    { "id": "E16", "source": "J4", "target": "S2", "distance_km": 1.4, "capacity_flow": 2100, "speed_kmh": 55 },
+    { "id": "E17", "source": "J4", "target": "J5", "distance_km": 2.8, "capacity_flow": 1600, "speed_kmh": 60 },
+    { "id": "E18", "source": "J5", "target": "S2", "distance_km": 2.4, "capacity_flow": 1900, "speed_kmh": 55 },
+    { "id": "E19", "source": "Z2", "target": "Z5", "distance_km": 1.9, "capacity_flow": 700, "speed_kmh": 30 },
+    { "id": "E20", "source": "Z3", "target": "J4", "distance_km": 2.6, "capacity_flow": 1300, "speed_kmh": 45 },
+    { "id": "E21", "source": "J1", "target": "S3", "distance_km": 2.8, "capacity_flow": 1500, "speed_kmh": 50 }
+  ],
+  "disasters": [
+    {
+      "id": "DIS_1",
+      "type": "flood",
+      "name": "Riverside Flash Flood Surge",
+      "lat": 13.0780,
+      "lng": 80.2650,
+      "radius_km": 1.1,
+      "severity": 0.85,
+      "description": "Rapid water level rise from torrential monsoon rains overflowing river banks."
+    }
+  ]
+}
