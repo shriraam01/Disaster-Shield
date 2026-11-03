@@ -11,20 +11,20 @@ import {
   useMapEvents
 } from 'react-leaflet';
 import L from 'leaflet';
-import { Shield, Users, AlertOctagon, Flame, Waves, Activity } from 'lucide-react';
+import { Shield, Users, AlertTriangle, Crosshair, Navigation } from 'lucide-react';
 
 // Controller to auto-pan and zoom map when scenario center changes
 function MapViewController({ center, zoom }) {
   const map = useMap();
   useEffect(() => {
     if (center && center.lat && center.lng) {
-      map.flyTo([center.lat, center.lng], zoom || 13, { duration: 1.2 });
+      map.flyTo([center.lat, center.lng], zoom || 13, { duration: 1.0 });
     }
   }, [center, zoom, map]);
   return null;
 }
 
-// Map Click Listener for placing custom disaster or inspecting coordinates
+// Map Click Listener for placing custom disaster
 function MapClickHandler({ onMapClick, isPlacingDisaster }) {
   useMapEvents({
     click(e) {
@@ -36,72 +36,75 @@ function MapClickHandler({ onMapClick, isPlacingDisaster }) {
   return null;
 }
 
-// Custom DivIcons for Shelters, Zones, and Junctions
+// High-end minimalist Shelter Icon
 const createShelterIcon = (node, isTarget) => {
-  const availPct = node.capacity > 0 ? Math.round(((node.capacity - node.current_occupancy) / node.capacity) * 100) : 0;
+  const occPct = node.capacity > 0 ? Math.round((node.current_occupancy / node.capacity) * 100) : 0;
   return L.divIcon({
-    className: 'custom-leaflet-marker',
+    className: 'custom-shelter-marker',
     html: `
-      <div class="relative flex flex-col items-center group cursor-pointer">
-        <div class="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg transition-transform hover:scale-110 ${
-          isTarget ? 'bg-emerald-400 ring-4 ring-emerald-400/40 text-slate-950 animate-bounce' : 'bg-emerald-600 text-white border-2 border-emerald-300'
-        }">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-          </svg>
-        </div>
-        <div class="mt-1 px-1.5 py-0.5 rounded bg-slate-900/90 border border-emerald-500/50 text-[10px] font-mono text-emerald-300 whitespace-nowrap shadow">
-          ${node.current_occupancy}/${node.capacity} (${availPct}%)
-        </div>
-      </div>
-    `,
-    iconSize: [36, 50],
-    iconAnchor: [18, 45],
-  });
-};
-
-const createZoneIcon = (node, isSelected) => {
-  const isEndangered = node.in_hazard_zone;
-  return L.divIcon({
-    className: 'custom-leaflet-marker',
-    html: `
-      <div class="relative flex flex-col items-center group cursor-pointer">
-        ${isEndangered ? '<div class="absolute -inset-1 rounded-xl bg-rose-500/40 animate-ping"></div>' : ''}
-        <div class="relative w-8 h-8 rounded-xl flex items-center justify-center shadow-lg transition-transform hover:scale-110 ${
-          isSelected
-            ? 'bg-cyan-400 text-slate-950 ring-4 ring-cyan-400/40'
-            : isEndangered
-            ? 'bg-rose-600 text-white border-2 border-rose-300'
-            : 'bg-amber-600 text-white border-2 border-amber-300'
+      <div class="relative flex flex-col items-center group cursor-pointer -translate-y-2">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${
+          isTarget
+            ? 'bg-emerald-500 text-slate-950 ring-4 ring-emerald-400/30 shadow-lg shadow-emerald-500/50 scale-110'
+            : 'bg-emerald-950/90 text-emerald-400 border border-emerald-500/50 shadow-md shadow-emerald-950/40 hover:scale-105 hover:border-emerald-400'
         }">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
         </div>
-        <div class="mt-1 px-1.5 py-0.5 rounded bg-slate-900/90 border ${isEndangered ? 'border-rose-500 text-rose-300' : 'border-amber-500 text-amber-300'} text-[10px] font-mono whitespace-nowrap shadow">
-          ${node.population.toLocaleString()} evacuees
+        <div class="mt-1 px-1.5 py-0.5 rounded-full bg-slate-950/90 border border-emerald-500/40 text-[9px] font-mono tracking-tight text-emerald-300 whitespace-nowrap shadow backdrop-blur-sm">
+          ${node.current_occupancy.toLocaleString()} / ${node.capacity.toLocaleString()}
         </div>
       </div>
     `,
     iconSize: [32, 46],
-    iconAnchor: [16, 42],
+    iconAnchor: [16, 40],
   });
 };
 
-const createJunctionIcon = (node, isVisited, isFrontier) => {
-  let bg = 'bg-slate-700 border-slate-500';
-  if (isFrontier) bg = 'bg-cyan-400 border-white ring-4 ring-cyan-400/50 animate-pulse';
-  else if (isVisited) bg = 'bg-emerald-400 border-white';
-
+// High-end minimalist Population Zone Icon
+const createZoneIcon = (node, isSelected) => {
+  const isEndangered = node.in_hazard_zone;
   return L.divIcon({
-    className: 'custom-leaflet-marker',
+    className: 'custom-zone-marker',
     html: `
-      <div class="w-4 h-4 rounded-full ${bg} border-2 shadow flex items-center justify-center cursor-pointer transition-transform hover:scale-125">
-        <div class="w-1.5 h-1.5 rounded-full bg-slate-900"></div>
+      <div class="relative flex flex-col items-center group cursor-pointer -translate-y-2">
+        <div class="relative w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${
+          isSelected
+            ? 'bg-sky-500 text-slate-950 ring-4 ring-sky-400/40 shadow-lg shadow-sky-500/50 scale-110'
+            : isEndangered
+            ? 'bg-rose-950/90 text-rose-400 border border-rose-500/60 shadow-md shadow-rose-950/40 hover:scale-105'
+            : 'bg-amber-950/90 text-amber-400 border border-amber-500/50 shadow-md shadow-amber-950/40 hover:scale-105'
+        }">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        </div>
+        <div class="mt-1 px-1.5 py-0.5 rounded-full bg-slate-950/90 border ${
+          isEndangered ? 'border-rose-500/50 text-rose-300' : 'border-amber-500/40 text-amber-300'
+        } text-[9px] font-mono whitespace-nowrap shadow backdrop-blur-sm">
+          ${node.population.toLocaleString()}
+        </div>
       </div>
     `,
-    iconSize: [16, 16],
-    iconAnchor: [8, 8],
+    iconSize: [32, 46],
+    iconAnchor: [16, 40],
+  });
+};
+
+// Junction Icon
+const createJunctionIcon = (node, isVisited, isFrontier) => {
+  let innerClass = 'bg-slate-700 border-slate-500';
+  if (isFrontier) innerClass = 'bg-sky-400 border-white ring-4 ring-sky-400/40 animate-pulse';
+  else if (isVisited) innerClass = 'bg-emerald-400 border-white';
+
+  return L.divIcon({
+    className: 'custom-junction-marker',
+    html: `
+      <div class="w-3.5 h-3.5 rounded-full ${innerClass} border shadow cursor-pointer transition-transform hover:scale-150"></div>
+    `,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
   });
 };
 
@@ -120,7 +123,6 @@ export default function MapView({
 }) {
   const center = graph?.center || { lat: 13.0827, lng: 80.2707, zoom: 13 };
 
-  // Set of edge IDs that are in the active evacuation path(s)
   const activePathEdgesSet = useMemo(() => {
     const s = new Set();
     activePaths.forEach(p => {
@@ -129,7 +131,6 @@ export default function MapView({
     return s;
   }, [activePaths]);
 
-  // Set of bottleneck edge IDs
   const bottleneckEdgesSet = useMemo(() => {
     const s = new Set();
     (graph?.edges || []).forEach(e => {
@@ -143,8 +144,8 @@ export default function MapView({
 
   if (!graph || !graph.nodes) {
     return (
-      <div className="h-full flex items-center justify-center bg-slate-950 text-slate-400 font-mono text-sm">
-        Initializing Tactical Map Layer...
+      <div className="h-full flex items-center justify-center bg-[#090a0f] text-zinc-500 font-mono text-xs">
+        Loading GIS Telemetry...
       </div>
     );
   }
@@ -153,7 +154,7 @@ export default function MapView({
   graph.nodes.forEach(n => { nodesMap[n.id] = n; });
 
   return (
-    <div className="relative w-full h-full">
+    <div className="relative w-full h-full dark-map-tiles select-none">
       <MapContainer
         center={[center.lat, center.lng]}
         zoom={center.zoom || 13}
@@ -163,64 +164,68 @@ export default function MapView({
         <MapViewController center={center} zoom={center.zoom} />
         <MapClickHandler onMapClick={onMapClick} isPlacingDisaster={isPlacingDisaster} />
 
-        {/* High-Contrast Tactical Dark Map Tiles */}
+        {/* 
+          Standard OpenStreetMap tiles with high-contrast cartographic dark mode.
+          100% FREE, NO API KEY REQUIRED, NO WATERMARKS!
+        */}
         <TileLayer
-          attribution='&copy; <a href="https://carto.com/">CARTO</a> | OpenStreetMap'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           maxZoom={19}
         />
 
-        {/* Disaster Epicenter Circles */}
+        {/* Hazard Danger Circles */}
         {(graph.disasters || []).map((disaster, idx) => {
           const radiusMeters = (disaster.radius_km || 1.0) * 1000;
-          let color = '#3b82f6';
-          let fill = '#1d4ed8';
+          let strokeColor = '#3b82f6';
+          let fillColor = '#1d4ed8';
 
           if (disaster.type === 'fire') {
-            color = '#f97316';
-            fill = '#ea580c';
+            strokeColor = '#f97316';
+            fillColor = '#ea580c';
           } else if (disaster.type === 'earthquake') {
-            color = '#ef4444';
-            fill = '#b91c1c';
+            strokeColor = '#ef4444';
+            fillColor = '#b91c1c';
           }
 
           return (
             <React.Fragment key={disaster.id || idx}>
-              {/* Outer pulsing ring */}
+              {/* Outer hazard boundary */}
               <Circle
                 center={[disaster.lat, disaster.lng]}
                 radius={radiusMeters}
                 pathOptions={{
-                  color: color,
-                  fillColor: fill,
-                  fillOpacity: 0.25,
-                  weight: 2,
-                  dashArray: '4, 8'
+                  color: strokeColor,
+                  fillColor: fillColor,
+                  fillOpacity: 0.16,
+                  weight: 1.5,
+                  dashArray: '5, 8'
                 }}
               >
                 <Popup>
-                  <div className="text-xs space-y-1">
-                    <div className="font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
-                      <AlertOctagon className="w-3.5 h-3.5" />
-                      {disaster.type} HAZARD ZONE
+                  <div className="text-xs space-y-1 p-0.5">
+                    <div className="font-semibold uppercase tracking-wider text-rose-400 text-[11px] flex items-center gap-1">
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      {disaster.type.toUpperCase()} IMPACT ZONE
                     </div>
-                    <div className="text-slate-200 font-semibold">{disaster.name || 'Disaster Epicenter'}</div>
-                    <div className="text-slate-400">{disaster.description}</div>
-                    <div className="font-mono text-[11px] text-cyan-300">
-                      Impact Radius: {disaster.radius_km} km | Severity: {Math.round((disaster.severity || 0.8) * 100)}%
+                    <div className="font-medium text-slate-100">{disaster.name || 'Hazard Epicenter'}</div>
+                    <div className="text-slate-400 text-[11px]">{disaster.description}</div>
+                    <div className="text-[10px] text-sky-400 font-mono pt-1">
+                      Radius: {disaster.radius_km} km | Severity: {Math.round((disaster.severity || 0.8) * 100)}%
                     </div>
                   </div>
                 </Popup>
               </Circle>
-              {/* Core epicenter inner circle */}
+
+              {/* Epicenter core */}
               <Circle
                 center={[disaster.lat, disaster.lng]}
-                radius={radiusMeters * 0.3}
+                radius={radiusMeters * 0.25}
                 pathOptions={{
-                  color: color,
-                  fillColor: fill,
-                  fillOpacity: 0.6,
-                  weight: 3
+                  color: strokeColor,
+                  fillColor: fillColor,
+                  fillOpacity: 0.45,
+                  weight: 2
                 }}
               />
             </React.Fragment>
@@ -243,28 +248,28 @@ export default function MapView({
           const isBottleneck = bottleneckEdgesSet.has(edge.id);
           const isStepHighlighted = highlightedEdges.includes(edge.id);
 
-          // Dynamic styling based on algorithmic role & status
-          let polyColor = '#334155'; // default muted road
-          let weight = 3;
-          let opacity = 0.7;
+          // Sleek clean styling
+          let polyColor = '#334155'; // Clean slate
+          let weight = 2.5;
+          let opacity = 0.6;
           let dashArray = undefined;
 
           if (isBlocked) {
-            polyColor = '#ef4444'; // Red blocked/flooded/damaged
-            weight = 4;
-            opacity = 0.9;
-            dashArray = '6, 8';
+            polyColor = '#f43f5e'; // Rose red for severed
+            weight = 3.5;
+            opacity = 0.95;
+            dashArray = '5, 7';
           } else if (isBottleneck) {
-            polyColor = '#eab308'; // Saturated yellow Min-Cut bottleneck
-            weight = 6;
+            polyColor = '#f59e0b'; // Amber bottleneck
+            weight = 5;
             opacity = 1.0;
           } else if (isStepHighlighted) {
-            polyColor = '#ec4899'; // Relaxing step pink
-            weight = 5;
+            polyColor = '#ec4899'; // Traversal highlight
+            weight = 4.5;
             opacity = 1.0;
           } else if (isActivePath) {
-            polyColor = '#06b6d4'; // Active path neon cyan
-            weight = 5;
+            polyColor = '#38bdf8'; // Active evacuation corridor neon sky blue
+            weight = 4.5;
             opacity = 1.0;
           }
 
@@ -285,31 +290,26 @@ export default function MapView({
               }}
             >
               <Tooltip sticky>
-                <div className="text-xs font-mono space-y-0.5">
-                  <div className="font-bold text-slate-100 flex items-center justify-between gap-3">
-                    <span>Road: {edge.id}</span>
-                    <span className={`px-1 rounded text-[10px] uppercase font-sans ${isBlocked ? 'bg-rose-950 text-rose-300' : 'bg-emerald-950 text-emerald-300'}`}>
+                <div className="text-xs space-y-1 p-0.5">
+                  <div className="font-semibold text-slate-100 flex items-center justify-between gap-3">
+                    <span>Corridor: {edge.id}</span>
+                    <span className={`px-1.5 py-0.2 rounded text-[10px] uppercase font-semibold ${isBlocked ? 'bg-rose-950 text-rose-300' : 'bg-emerald-950 text-emerald-300'}`}>
                       {edge.status}
                     </span>
                   </div>
-                  <div className="text-slate-300">
-                    {src.name} &harr; {dst.name}
+                  <div className="text-slate-300 text-[11px]">
+                    {src.name} &rarr; {dst.name}
                   </div>
-                  <div className="text-cyan-300">
-                    Distance: {edge.distance_km} km | Cap: {edge.capacity_flow} p/hr
+                  <div className="text-sky-300 text-[11px] font-mono">
+                    {edge.distance_km} km | Flow Capacity: {edge.capacity_flow} p/hr
                   </div>
-                  {edge.current_flow > 0 && (
-                    <div className="text-amber-300 font-semibold">
-                      Current Flow: {edge.current_flow} p/hr ({Math.round((edge.current_flow / edge.capacity_flow) * 100)}%)
-                    </div>
-                  )}
                   {isBottleneck && (
-                    <div className="text-rose-400 font-bold">
-                      &bull; CRITICAL MIN-CUT BOTTLENECK
+                    <div className="text-amber-400 font-medium text-[11px] pt-0.5">
+                      &bull; Saturated Capacity Bottleneck
                     </div>
                   )}
                   <div className="text-[10px] text-slate-400 italic pt-0.5">
-                    Click road to toggle block/open
+                    Click to toggle corridor status
                   </div>
                 </div>
               </Tooltip>
@@ -346,31 +346,31 @@ export default function MapView({
               }}
             >
               <Popup>
-                <div className="text-xs space-y-1.5 p-1 min-w-[200px]">
-                  <div className="flex items-center justify-between gap-2 border-b border-slate-700 pb-1">
-                    <span className="font-bold text-slate-100">{node.name}</span>
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 uppercase">
+                <div className="text-xs space-y-2 p-1 min-w-[210px]">
+                  <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-1.5">
+                    <span className="font-semibold text-slate-100">{node.name}</span>
+                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-slate-300 uppercase">
                       {node.type}
                     </span>
                   </div>
 
-                  <p className="text-slate-300 text-[11px]">{node.description || 'Grid node'}</p>
+                  <p className="text-slate-400 text-[11px]">{node.description || 'Sector node'}</p>
 
                   {node.type === 'zone' && (
-                    <div className="space-y-1 font-mono text-[11px]">
-                      <div className="text-amber-400 flex items-center justify-between">
+                    <div className="space-y-1.5 text-[11px]">
+                      <div className="text-amber-300 flex items-center justify-between">
                         <span>Evacuee Population:</span>
-                        <span className="font-bold">{node.population.toLocaleString()}</span>
+                        <span className="font-semibold font-mono">{node.population.toLocaleString()}</span>
                       </div>
                       {node.in_hazard_zone && (
-                        <div className="text-rose-400 font-semibold flex items-center justify-between">
-                          <span>Hazard Proximity:</span>
+                        <div className="text-rose-400 font-medium flex items-center justify-between">
+                          <span>Hazard Risk:</span>
                           <span>SEVERITY {Math.round(node.hazard_severity * 100)}%</span>
                         </div>
                       )}
                       <button
                         onClick={() => onSelectSource && onSelectSource(node.id)}
-                        className="mt-2 w-full py-1 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-sans text-xs font-semibold transition"
+                        className="mt-1 w-full py-1.5 rounded-lg bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-xs transition"
                       >
                         Set as Evacuation Origin
                       </button>
@@ -378,21 +378,21 @@ export default function MapView({
                   )}
 
                   {node.type === 'shelter' && (
-                    <div className="space-y-1 font-mono text-[11px]">
+                    <div className="space-y-1.5 text-[11px]">
                       <div className="flex items-center justify-between text-emerald-400">
-                        <span>Total Capacity:</span>
-                        <span>{node.capacity.toLocaleString()}</span>
+                        <span>Max Capacity:</span>
+                        <span className="font-mono">{node.capacity.toLocaleString()}</span>
                       </div>
                       <div className="flex items-center justify-between text-slate-300">
                         <span>Current Occupancy:</span>
-                        <span>{node.current_occupancy.toLocaleString()}</span>
+                        <span className="font-mono">{node.current_occupancy.toLocaleString()}</span>
                       </div>
-                      <div className="flex items-center justify-between font-bold text-cyan-300">
-                        <span>Available Space:</span>
-                        <span>{Math.max(0, node.capacity - node.current_occupancy).toLocaleString()}</span>
+                      <div className="flex items-center justify-between font-semibold text-sky-300">
+                        <span>Available Beds:</span>
+                        <span className="font-mono">{Math.max(0, node.capacity - node.current_occupancy).toLocaleString()}</span>
                       </div>
-                      {/* Capacity progress bar */}
-                      <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden mt-1">
+                      {/* Meter bar */}
+                      <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
                         <div
                           className="bg-emerald-500 h-full rounded-full transition-all"
                           style={{ width: `${Math.min(100, (node.current_occupancy / (node.capacity || 1)) * 100)}%` }}
@@ -407,36 +407,31 @@ export default function MapView({
         })}
       </MapContainer>
 
-      {/* Map Legend Overlay in bottom-left */}
-      <div className="absolute bottom-4 left-4 z-[400] bg-slate-900/90 backdrop-blur-md border border-slate-800 rounded-xl p-3 text-[11px] space-y-1.5 shadow-xl max-w-xs pointer-events-auto hidden sm:block">
-        <div className="font-bold text-slate-200 uppercase tracking-wider text-[10px] flex items-center justify-between">
-          <span>Map HUD Legend</span>
-          <span className="text-cyan-400 font-mono">LIVE GIS</span>
+      {/* Modern floating legend in bottom-left */}
+      <div className="absolute bottom-4 left-4 z-[400] glass-panel rounded-xl px-3.5 py-2.5 text-[11px] shadow-2xl pointer-events-auto border border-white/10 hidden md:block">
+        <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
+          Cartographic Legend
         </div>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-slate-300">
+        <div className="flex items-center gap-4 text-zinc-300 text-xs">
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded bg-emerald-500"></span>
-            <span>Shelter Bunker</span>
+            <span>Safe Shelter</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded bg-amber-500"></span>
             <span>Evacuation Zone</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-0.5 bg-cyan-400"></span>
-            <span>Optimal Route</span>
+            <span className="w-3.5 h-0.5 bg-sky-400"></span>
+            <span>Active Corridor</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-0.5 bg-rose-500 border-b border-dashed border-rose-300"></span>
+            <span className="w-3.5 h-0.5 bg-rose-500 border-b border-dashed border-rose-300"></span>
             <span>Severed Road</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-1 bg-yellow-400"></span>
-            <span>Min-Cut Bottleneck</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500/50"></span>
-            <span>Hazard Perimeter</span>
+            <span className="w-3.5 h-0.5 bg-amber-400"></span>
+            <span>Bottleneck</span>
           </div>
         </div>
       </div>

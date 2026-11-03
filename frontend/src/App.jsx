@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import confetti from 'canvas-confetti';
-import { Shield, AlertCircle, Info, Activity } from 'lucide-react';
+import { Shield, AlertCircle } from 'lucide-react';
 import Header from './components/Header';
 import MapView from './components/MapView';
 import DisasterControls from './components/DisasterControls';
@@ -16,13 +16,13 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
 
-  // Algorithmic State
+  // Operational State
   const [selectedAlgorithm, setSelectedAlgorithm] = useState('dijkstra');
   const [selectedSourceId, setSelectedSourceId] = useState('');
   const [selectedShelterId, setSelectedShelterId] = useState('');
   const [algorithmResult, setAlgorithmResult] = useState(null);
 
-  // Step-by-Step Traversal Visualizer State
+  // Traversal Scrubber State
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(400);
@@ -31,7 +31,7 @@ export default function App() {
   const [isPlacingDisaster, setIsPlacingDisaster] = useState(false);
   const [newDisasterType, setNewDisasterType] = useState('flood');
 
-  // Comparison Benchmark Modal State
+  // Diagnostics Modal State
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [comparisonData, setComparisonData] = useState(null);
   const [isComparing, setIsComparing] = useState(false);
@@ -47,7 +47,7 @@ export default function App() {
         }
       } catch (err) {
         console.error('Failed to load scenarios:', err);
-        setErrorMsg('Failed to connect to DisasterShield Backend API.');
+        setErrorMsg('Failed to connect to DisasterShield Backend Telemetry Service.');
       }
     }
     init();
@@ -65,20 +65,19 @@ export default function App() {
       setCurrentStepIndex(0);
       setIsPlaying(false);
 
-      // Default source to first population zone
       const firstZone = (data.nodes || []).find(n => n.type === 'zone');
       if (firstZone) {
         setSelectedSourceId(firstZone.id);
       }
     } catch (err) {
       console.error('Error fetching scenario:', err);
-      setErrorMsg('Error loading scenario network data.');
+      setErrorMsg('Error loading sector network data.');
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // Reset scenario to default state
+  // Reset scenario
   const handleResetScenario = async () => {
     setIsLoading(true);
     try {
@@ -94,19 +93,18 @@ export default function App() {
     }
   };
 
-  // Toggle road block / passable
+  // Toggle road block
   const handleToggleRoad = async (edgeId) => {
     try {
       const res = await apiService.toggleRoad(currentScenarioId, edgeId);
       if (res.graph) {
         setGraph(res.graph);
-        // Clear active path if road toggled to prevent outdated routes
         if (algorithmResult) {
           setAlgorithmResult(null);
         }
       }
     } catch (err) {
-      console.error('Failed to toggle road:', err);
+      console.error('Failed to toggle corridor:', err);
     }
   };
 
@@ -118,11 +116,11 @@ export default function App() {
         setGraph(res.graph);
       }
     } catch (err) {
-      console.error('Failed to simulate disasters:', err);
+      console.error('Failed to simulate hazard:', err);
     }
   };
 
-  // Handle map click to place new epicenter
+  // Map click for new epicenter
   const handleMapClick = async (latlng) => {
     if (!isPlacingDisaster) return;
 
@@ -134,7 +132,7 @@ export default function App() {
       lng: latlng.lng,
       radius_km: 1.0,
       severity: 0.85,
-      description: `Emergency outbreak triggered at coordinates [${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}]`
+      description: `Hazard epicenter detected at [${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}]`
     };
 
     const currentDisasters = graph?.disasters || [];
@@ -170,24 +168,23 @@ export default function App() {
         setCurrentStepIndex(0);
         setIsPlaying(true);
 
-        // Confetti celebration for successful evacuation route
         if (res.paths && res.paths.length > 0) {
           confetti({
-            particleCount: 50,
-            spread: 60,
+            particleCount: 40,
+            spread: 50,
             origin: { y: 0.85 }
           });
         }
       }
     } catch (err) {
-      console.error('Error executing algorithm:', err);
-      setErrorMsg('Algorithm execution error.');
+      console.error('Error executing routing engine:', err);
+      setErrorMsg('Routing computation error.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Open & run comparative benchmark
+  // Open diagnostics
   const handleOpenCompare = async () => {
     setIsCompareOpen(true);
     setIsComparing(true);
@@ -195,13 +192,12 @@ export default function App() {
       const data = await apiService.compareAll(currentScenarioId, selectedSourceId);
       setComparisonData(data);
     } catch (err) {
-      console.error('Failed to run comparison:', err);
+      console.error('Failed to run diagnostics:', err);
     } finally {
       setIsComparing(false);
     }
   };
 
-  // Traversal Step inspection data
   const currentStep = useMemo(() => {
     const steps = algorithmResult?.steps || [];
     return steps[currentStepIndex] || null;
@@ -231,8 +227,8 @@ export default function App() {
   }, [graph]);
 
   return (
-    <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col font-sans select-none">
-      {/* Top Tactical Command Header */}
+    <div className="h-screen w-screen bg-[#08090d] text-zinc-100 flex flex-col font-sans select-none overflow-hidden">
+      {/* Top Operations Header */}
       <Header
         scenarios={scenarios}
         currentScenarioId={currentScenarioId}
@@ -245,39 +241,21 @@ export default function App() {
 
       {/* Error alert banner */}
       {errorMsg && (
-        <div className="bg-rose-950/80 border-b border-rose-800 px-4 py-2 text-rose-300 text-xs flex items-center justify-between">
+        <div className="bg-rose-950/90 border-b border-rose-500/30 px-5 py-2 text-rose-300 text-xs flex items-center justify-between z-50">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-rose-400" />
             <span>{errorMsg}</span>
           </div>
-          <button onClick={() => setErrorMsg(null)} className="text-rose-400 hover:text-white">
+          <button onClick={() => setErrorMsg(null)} className="text-rose-400 hover:text-white font-medium">
             Dismiss
           </button>
         </div>
       )}
 
-      {/* Main Command Center Workspace */}
-      <main className="flex-1 p-3 grid grid-cols-1 lg:grid-cols-12 gap-3 max-w-[1700px] w-full mx-auto">
-        {/* Left Side: Hazard Dynamics + Shelter HUD (3 Cols on Desktop) */}
-        <div className="lg:col-span-3 space-y-3 flex flex-col">
-          <DisasterControls
-            disasters={graph?.disasters || []}
-            onUpdateDisasters={handleUpdateDisasters}
-            isPlacingDisaster={isPlacingDisaster}
-            setIsPlacingDisaster={setIsPlacingDisaster}
-            newDisasterType={newDisasterType}
-            setNewDisasterType={setNewDisasterType}
-            severedEdgesCount={severedEdgesCount}
-          />
-
-          <ShelterStatusHud
-            graph={graph}
-            algorithmResult={algorithmResult}
-          />
-        </div>
-
-        {/* Center: Dynamic Map View (5 Cols on Desktop) */}
-        <div className="lg:col-span-5 h-[480px] lg:h-auto min-h-[460px] rounded-2xl overflow-hidden border border-slate-800 shadow-2xl relative">
+      {/* Main Operations Canvas (Full View GIS with Sleek Side Panels) */}
+      <div className="flex-1 relative flex overflow-hidden">
+        {/* Full View GIS Map Centerpiece */}
+        <div className="absolute inset-0 z-0">
           <MapView
             graph={graph}
             activePaths={activePaths}
@@ -293,30 +271,55 @@ export default function App() {
           />
         </div>
 
-        {/* Right Side: Algorithm Controls & Traversal Inspector (4 Cols on Desktop) */}
-        <div className="lg:col-span-4 flex flex-col">
-          <AlgorithmPanel
-            graph={graph}
-            selectedAlgorithm={selectedAlgorithm}
-            setSelectedAlgorithm={setSelectedAlgorithm}
-            selectedSourceId={selectedSourceId}
-            setSelectedSourceId={setSelectedSourceId}
-            selectedShelterId={selectedShelterId}
-            setSelectedShelterId={setSelectedShelterId}
-            onExecuteAlgorithm={handleExecuteAlgorithm}
-            algorithmResult={algorithmResult}
-            isLoading={isLoading}
-            currentStepIndex={currentStepIndex}
-            setCurrentStepIndex={setCurrentStepIndex}
-            isPlaying={isPlaying}
-            setIsPlaying={setIsPlaying}
-            playbackSpeed={playbackSpeed}
-            setPlaybackSpeed={setPlaybackSpeed}
-          />
-        </div>
-      </main>
+        {/* Floating Left Panel (Hazard Parameters & Shelter HUD) */}
+        <div className="relative z-10 w-[350px] max-w-[90vw] p-4 flex flex-col gap-3.5 pointer-events-none overflow-y-auto max-h-[calc(100vh-65px)]">
+          <div className="pointer-events-auto space-y-3.5">
+            <DisasterControls
+              disasters={graph?.disasters || []}
+              onUpdateDisasters={handleUpdateDisasters}
+              isPlacingDisaster={isPlacingDisaster}
+              setIsPlacingDisaster={setIsPlacingDisaster}
+              newDisasterType={newDisasterType}
+              setNewDisasterType={setNewDisasterType}
+              severedEdgesCount={severedEdgesCount}
+            />
 
-      {/* Comparative Benchmark Modal */}
+            <ShelterStatusHud
+              graph={graph}
+              algorithmResult={algorithmResult}
+            />
+          </div>
+        </div>
+
+        {/* Spacer for interactive map */}
+        <div className="flex-1 pointer-events-none"></div>
+
+        {/* Floating Right Panel (Routing & Dispatch Engine) */}
+        <div className="relative z-10 w-[420px] max-w-[90vw] p-4 flex flex-col pointer-events-none overflow-y-auto max-h-[calc(100vh-65px)]">
+          <div className="pointer-events-auto">
+            <AlgorithmPanel
+              graph={graph}
+              selectedAlgorithm={selectedAlgorithm}
+              setSelectedAlgorithm={setSelectedAlgorithm}
+              selectedSourceId={selectedSourceId}
+              setSelectedSourceId={setSelectedSourceId}
+              selectedShelterId={selectedShelterId}
+              setSelectedShelterId={setSelectedShelterId}
+              onExecuteAlgorithm={handleExecuteAlgorithm}
+              algorithmResult={algorithmResult}
+              isLoading={isLoading}
+              currentStepIndex={currentStepIndex}
+              setCurrentStepIndex={setCurrentStepIndex}
+              isPlaying={isPlaying}
+              setIsPlaying={setIsPlaying}
+              playbackSpeed={playbackSpeed}
+              setPlaybackSpeed={setPlaybackSpeed}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Diagnostics & Benchmark Modal */}
       <ComparisonModal
         isOpen={isCompareOpen}
         onClose={() => setIsCompareOpen(false)}
