@@ -39,6 +39,15 @@ export const apiService = {
     return res.json();
   },
 
+  async addNode(scenarioId, nodeData) {
+    const res = await fetch(`${API_BASE}/nodes/add`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scenario_id: scenarioId, node: nodeData }),
+    });
+    return res.json();
+  },
+
   async runDijkstra(scenarioId, sourceId, targetShelterId = null) {
     const res = await fetch(`${API_BASE}/evacuate/dijkstra`, {
       method: 'POST',

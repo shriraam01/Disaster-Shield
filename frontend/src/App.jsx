@@ -7,11 +7,13 @@ import DisasterControls from './components/DisasterControls';
 import AlgorithmPanel from './components/AlgorithmPanel';
 import ShelterStatusHud from './components/ShelterStatusHud';
 import ComparisonModal from './components/ComparisonModal';
+import ProfessorDemoSuite from './components/ProfessorDemoSuite';
+import LogicInspector from './components/LogicInspector';
 import { apiService } from './services/api';
 
 export default function App() {
   const [scenarios, setScenarios] = useState([]);
-  const [currentScenarioId, setCurrentScenarioId] = useState('metro_city');
+  const [currentScenarioId, setCurrentScenarioId] = useState('greater_chennai');
   const [graph, setGraph] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
@@ -27,14 +29,15 @@ export default function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(400);
 
-  // Disaster Management State
-  const [isPlacingDisaster, setIsPlacingDisaster] = useState(false);
+  // Interactive Map Tool State
+  const [activeTool, setActiveTool] = useState('inspect'); // 'inspect' | 'cut_road' | 'add_zone' | 'add_shelter' | 'drop_hazard'
   const [newDisasterType, setNewDisasterType] = useState('flood');
 
-  // Diagnostics Modal State
+  // Modals
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [comparisonData, setComparisonData] = useState(null);
   const [isComparing, setIsComparing] = useState(false);
+  const [isDemoSuiteOpen, setIsDemoSuiteOpen] = useState(false);
 
   // Load scenarios on mount
   useEffect(() => {
@@ -43,7 +46,10 @@ export default function App() {
         const data = await apiService.getScenarios();
         if (data.scenarios && data.scenarios.length > 0) {
           setScenarios(data.scenarios);
-          loadScenario(data.scenarios[0].id);
+          // Prefer greater_chennai if available
+          const hasGreater = data.scenarios.find(s => s.id === 'greater_chennai');
+          const defaultId = hasGreater ? 'greater_chennai' : data.scenarios[0].id;
+          loadScenario(defaultId);
         }
       } catch (err) {
         console.error('Failed to load scenarios:', err);
@@ -100,7 +106,8 @@ export default function App() {
       if (res.graph) {
         setGraph(res.graph);
         if (algorithmResult) {
-          setAlgorithmResult(null);
+          // Re-execute current algorithm on the fly!
+          executeRoutingAlgorithm(currentScenarioId, selectedAlgorithm, selectedSourceId, selectedShelterId);
         }
       }
     } catch (err) {
@@ -120,47 +127,77 @@ export default function App() {
     }
   };
 
-  // Map click for new epicenter
-  const handleMapClick = async (latlng) => {
-    if (!isPlacingDisaster) return;
-
-    const newEpicenter = {
-      id: `DIS_${Date.now()}`,
-      type: newDisasterType,
-      name: `${newDisasterType.toUpperCase()} Ground Zero`,
-      lat: latlng.lat,
-      lng: latlng.lng,
-      radius_km: 1.0,
-      severity: 0.85,
-      description: `Hazard epicenter detected at [${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}]`
-    };
-
-    const currentDisasters = graph?.disasters || [];
-    const updated = [newEpicenter, ...currentDisasters];
-    await handleUpdateDisasters(updated);
-    setIsPlacingDisaster(false);
+  // Interactive Map Click Handler (Add Zone, Add Shelter, Add Hazard)
+  const handleMapClick = async (latlng, tool) => {
+    if (tool === 'drop_hazard') {
+      const newEpicenter = {
+        id: `DIS_${Date.now()}`,
+        type: newDisasterType,
+        name: `${newDisasterType.toUpperCase()} Ground Zero`,
+        lat: latlng.lat,
+        lng: latlng.lng,
+        radius_km: 1.2,
+        severity: 0.85,
+        description: `Hazard outbreak triggered at [${latlng.lat.toFixed(4)}, ${latlng.lng.toFixed(4)}]`
+      };
+      const currentDisasters = graph?.disasters || [];
+      const updated = [newEpicenter, ...currentDisasters];
+      await handleUpdateDisasters(updated);
+      setActiveTool('inspect');
+    } else if (tool === 'add_zone') {
+      const nodeData = {
+        id: `Z_CUSTOM_${Date.now().toString().slice(-4)}`,
+        name: `Sector Node ${Date.now().toString().slice(-3)}`,
+        lat: latlng.lat,
+        lng: latlng.lng,
+        type: 'zone',
+        population: 4500,
+        description: 'New residential sector deployed via Interactive Tools'
+      };
+      const res = await apiService.addNode(currentScenarioId, nodeData);
+      if (res.graph) {
+        setGraph(res.graph);
+        setSelectedSourceId(nodeData.id);
+      }
+      setActiveTool('inspect');
+    } else if (tool === 'add_shelter') {
+      const nodeData = {
+        id: `S_CUSTOM_${Date.now().toString().slice(-4)}`,
+        name: `High-Plateau Refuge ${Date.now().toString().slice(-3)}`,
+        lat: latlng.lat,
+        lng: latlng.lng,
+        type: 'shelter',
+        capacity: 8000,
+        description: 'Emergency bunker shelter deployed via Interactive Tools'
+      };
+      const res = await apiService.addNode(currentScenarioId, nodeData);
+      if (res.graph) {
+        setGraph(res.graph);
+      }
+      setActiveTool('inspect');
+    }
   };
 
-  // Execute selected algorithm
-  const handleExecuteAlgorithm = async () => {
+  // Reusable Algorithm Execution
+  const executeRoutingAlgorithm = async (scenarioId, algorithm, sourceId, shelterId) => {
     if (!graph) return;
     setIsLoading(true);
     setErrorMsg(null);
     try {
       let res = null;
-      if (selectedAlgorithm === 'dijkstra') {
-        res = await apiService.runDijkstra(currentScenarioId, selectedSourceId, selectedShelterId);
-      } else if (selectedAlgorithm === 'astar') {
-        res = await apiService.runAStar(currentScenarioId, selectedSourceId, selectedShelterId);
-      } else if (selectedAlgorithm === 'bfs') {
-        res = await apiService.runBFS(currentScenarioId, selectedSourceId);
-      } else if (selectedAlgorithm === 'max-flow') {
-        res = await apiService.runMaxFlow(currentScenarioId);
+      if (algorithm === 'dijkstra') {
+        res = await apiService.runDijkstra(scenarioId, sourceId, shelterId);
+      } else if (algorithm === 'astar') {
+        res = await apiService.runAStar(scenarioId, sourceId, shelterId);
+      } else if (algorithm === 'bfs') {
+        res = await apiService.runBFS(scenarioId, sourceId);
+      } else if (algorithm === 'max-flow') {
+        res = await apiService.runMaxFlow(scenarioId);
         if (res.updated_graph) {
           setGraph(res.updated_graph);
         }
-      } else if (selectedAlgorithm === 'greedy') {
-        res = await apiService.runGreedy(currentScenarioId);
+      } else if (algorithm === 'greedy') {
+        res = await apiService.runGreedy(scenarioId);
       }
 
       if (res) {
@@ -170,8 +207,8 @@ export default function App() {
 
         if (res.paths && res.paths.length > 0) {
           confetti({
-            particleCount: 40,
-            spread: 50,
+            particleCount: 50,
+            spread: 60,
             origin: { y: 0.85 }
           });
         }
@@ -182,6 +219,21 @@ export default function App() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleExecuteAlgorithm = () => {
+    executeRoutingAlgorithm(currentScenarioId, selectedAlgorithm, selectedSourceId, selectedShelterId);
+  };
+
+  // Run a Professor Demo Case
+  const handleRunDemoCase = async (demoCase) => {
+    setIsLoading(true);
+    await loadScenario(demoCase.scenarioId);
+    setSelectedAlgorithm(demoCase.algorithm);
+    setSelectedSourceId(demoCase.sourceId);
+    setTimeout(() => {
+      executeRoutingAlgorithm(demoCase.scenarioId, demoCase.algorithm, demoCase.sourceId, null);
+    }, 400);
   };
 
   // Open diagnostics
@@ -235,8 +287,9 @@ export default function App() {
         onSelectScenario={(id) => loadScenario(id)}
         onResetScenario={handleResetScenario}
         onOpenCompare={handleOpenCompare}
+        onOpenDemoSuite={() => setIsDemoSuiteOpen(true)}
         isLoading={isLoading}
-        threatLevel={severedEdgesCount > 2 ? 'CRITICAL' : (severedEdgesCount > 0 ? 'ELEVATED' : 'LOW')}
+        threatLevel={severedEdgesCount > 4 ? 'CRITICAL' : (severedEdgesCount > 0 ? 'ELEVATED' : 'LOW')}
       />
 
       {/* Error alert banner */}
@@ -266,7 +319,8 @@ export default function App() {
             onSelectSource={(id) => setSelectedSourceId(id)}
             onToggleRoad={handleToggleRoad}
             onMapClick={handleMapClick}
-            isPlacingDisaster={isPlacingDisaster}
+            activeTool={activeTool}
+            setActiveTool={setActiveTool}
             activeStep={currentStep}
           />
         </div>
@@ -277,8 +331,8 @@ export default function App() {
             <DisasterControls
               disasters={graph?.disasters || []}
               onUpdateDisasters={handleUpdateDisasters}
-              isPlacingDisaster={isPlacingDisaster}
-              setIsPlacingDisaster={setIsPlacingDisaster}
+              isPlacingDisaster={activeTool === 'drop_hazard'}
+              setIsPlacingDisaster={(val) => setActiveTool(val ? 'drop_hazard' : 'inspect')}
               newDisasterType={newDisasterType}
               setNewDisasterType={setNewDisasterType}
               severedEdgesCount={severedEdgesCount}
@@ -294,9 +348,9 @@ export default function App() {
         {/* Spacer for interactive map */}
         <div className="flex-1 pointer-events-none"></div>
 
-        {/* Floating Right Panel (Routing & Dispatch Engine) */}
-        <div className="relative z-10 w-[420px] max-w-[90vw] p-4 flex flex-col pointer-events-none overflow-y-auto max-h-[calc(100vh-65px)]">
-          <div className="pointer-events-auto">
+        {/* Floating Right Panel (Routing & Dispatch Engine + Logic Inspector) */}
+        <div className="relative z-10 w-[440px] max-w-[90vw] p-4 flex flex-col gap-3 pointer-events-none overflow-y-auto max-h-[calc(100vh-65px)]">
+          <div className="pointer-events-auto space-y-3">
             <AlgorithmPanel
               graph={graph}
               selectedAlgorithm={selectedAlgorithm}
@@ -315,9 +369,23 @@ export default function App() {
               playbackSpeed={playbackSpeed}
               setPlaybackSpeed={setPlaybackSpeed}
             />
+
+            {/* DAA Memory & Data Structure Inspector */}
+            <LogicInspector
+              currentStep={currentStep}
+              algorithmResult={algorithmResult}
+              selectedAlgorithm={selectedAlgorithm}
+            />
           </div>
         </div>
       </div>
+
+      {/* Professor Demo Suite Modal */}
+      <ProfessorDemoSuite
+        isOpen={isDemoSuiteOpen}
+        onClose={() => setIsDemoSuiteOpen(false)}
+        onRunDemoCase={handleRunDemoCase}
+      />
 
       {/* Diagnostics & Benchmark Modal */}
       <ComparisonModal

@@ -136,6 +136,34 @@ def toggle_road():
     })
 
 
+@app.route("/api/nodes/add", methods=["POST"])
+def add_custom_node():
+    """Adds a custom zone or shelter dynamically to the graph."""
+    graph, req_data = parse_graph_from_request()
+    node_data = req_data.get("node", {})
+    if not node_data or "id" not in node_data:
+        return jsonify({"error": "Invalid node data"}), 400
+
+    from backend.models.graph import Node
+    new_node = Node(
+        node_id=node_data["id"],
+        name=node_data.get("name", "Custom Location"),
+        lat=float(node_data["lat"]),
+        lng=float(node_data["lng"]),
+        node_type=node_data.get("type", "zone"),
+        population=int(node_data.get("population", 3000)),
+        capacity=int(node_data.get("capacity", 5000)),
+        description=node_data.get("description", "Custom added via Interactive Command Tools")
+    )
+
+    graph.add_custom_node(new_node, connect_nearest=2)
+    return jsonify({
+        "status": "success",
+        "node": new_node.to_dict(),
+        "graph": graph.to_dict()
+    })
+
+
 @app.route("/api/evacuate/dijkstra", methods=["POST"])
 def execute_dijkstra():
     graph, req_data = parse_graph_from_request()

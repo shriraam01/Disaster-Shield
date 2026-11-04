@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, AlertCircle, BarChart2, RotateCcw, Radio, ExternalLink } from 'lucide-react';
+import { Shield, GraduationCap, BarChart2, RotateCcw, ExternalLink } from 'lucide-react';
 
 export default function Header({
   scenarios,
@@ -7,6 +7,7 @@ export default function Header({
   onSelectScenario,
   onResetScenario,
   onOpenCompare,
+  onOpenDemoSuite,
   isLoading,
   threatLevel = 'ELEVATED'
 }) {
@@ -19,7 +20,7 @@ export default function Header({
   const currentThreat = threatConfig[threatLevel] || threatConfig.ELEVATED;
 
   return (
-    <header className="glass-panel border-b border-white/10 px-5 py-3 sticky top-0 z-50">
+    <header className="glass-panel border-b border-white/10 px-5 py-2.5 sticky top-0 z-50">
       <div className="max-w-[1900px] mx-auto flex items-center justify-between gap-4">
         {/* Brand */}
         <div className="flex items-center gap-3">
@@ -69,7 +70,25 @@ export default function Header({
         </div>
 
         {/* Right Tools */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
+          {/* PROFESSOR DEMO SUITE BUTTON */}
+          <button
+            onClick={onOpenDemoSuite}
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 transition hover:scale-105 active:scale-95 animate-pulse"
+          >
+            <GraduationCap className="w-4 h-4 fill-current" />
+            <span>Professor Demo Suite</span>
+          </button>
+
+          {/* Diagnostics & Benchmark */}
+          <button
+            onClick={onOpenCompare}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 font-semibold text-xs border border-sky-400/30 transition active:scale-95"
+          >
+            <BarChart2 className="w-3.5 h-3.5" />
+            <span>Engine Analytics</span>
+          </button>
+
           {/* Reset Grid */}
           <button
             onClick={onResetScenario}
@@ -79,15 +98,6 @@ export default function Header({
           >
             <RotateCcw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
             <span>Reset Grid</span>
-          </button>
-
-          {/* Diagnostics & Benchmark */}
-          <button
-            onClick={onOpenCompare}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-semibold text-xs shadow-lg shadow-sky-500/20 transition active:scale-95"
-          >
-            <BarChart2 className="w-3.5 h-3.5" />
-            <span>Engine Analytics</span>
           </button>
 
           {/* GitHub Link */}

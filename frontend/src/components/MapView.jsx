@@ -11,48 +11,53 @@ import {
   useMapEvents
 } from 'react-leaflet';
 import L from 'leaflet';
-import { Shield, Users, AlertTriangle, Crosshair, Navigation } from 'lucide-react';
+import { Shield, Users, AlertTriangle, Crosshair, Plus, Scissors, Home, Flame, Info } from 'lucide-react';
 
-// Controller to auto-pan and zoom map when scenario center changes
-function MapViewController({ center, zoom }) {
+// Controller to auto-fit bounds dynamically so ALL nodes in any scenario are centered and framed!
+function MapBoundsController({ nodes }) {
   const map = useMap();
   useEffect(() => {
-    if (center && center.lat && center.lng) {
-      map.flyTo([center.lat, center.lng], zoom || 13, { duration: 1.0 });
+    if (nodes && nodes.length > 0) {
+      const bounds = L.latLngBounds(nodes.map(n => [n.lat, n.lng]));
+      map.fitBounds(bounds, {
+        padding: [60, 60],
+        maxZoom: 14,
+        animate: true,
+        duration: 0.8
+      });
     }
-  }, [center, zoom, map]);
+  }, [nodes, map]);
   return null;
 }
 
-// Map Click Listener for placing custom disaster
-function MapClickHandler({ onMapClick, isPlacingDisaster }) {
+// Map Click Listener for interactive placement tools
+function MapClickHandler({ onMapClick, activeTool }) {
   useMapEvents({
     click(e) {
-      if (isPlacingDisaster && onMapClick) {
-        onMapClick(e.latlng);
+      if (activeTool && activeTool !== 'inspect' && onMapClick) {
+        onMapClick(e.latlng, activeTool);
       }
     },
   });
   return null;
 }
 
-// High-end minimalist Shelter Icon
+// Shelter Icon
 const createShelterIcon = (node, isTarget) => {
-  const occPct = node.capacity > 0 ? Math.round((node.current_occupancy / node.capacity) * 100) : 0;
   return L.divIcon({
     className: 'custom-shelter-marker',
     html: `
       <div class="relative flex flex-col items-center group cursor-pointer -translate-y-2">
         <div class="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${
           isTarget
-            ? 'bg-emerald-500 text-slate-950 ring-4 ring-emerald-400/30 shadow-lg shadow-emerald-500/50 scale-110'
-            : 'bg-emerald-950/90 text-emerald-400 border border-emerald-500/50 shadow-md shadow-emerald-950/40 hover:scale-105 hover:border-emerald-400'
+            ? 'bg-emerald-500 text-slate-950 ring-4 ring-emerald-400/40 shadow-lg shadow-emerald-500/50 scale-110'
+            : 'bg-emerald-950/90 text-emerald-400 border border-emerald-500/50 shadow-md shadow-emerald-950/40 hover:scale-110 hover:border-emerald-300'
         }">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
         </div>
-        <div class="mt-1 px-1.5 py-0.5 rounded-full bg-slate-950/90 border border-emerald-500/40 text-[9px] font-mono tracking-tight text-emerald-300 whitespace-nowrap shadow backdrop-blur-sm">
+        <div class="mt-1 px-1.5 py-0.5 rounded-full bg-slate-950/90 border border-emerald-500/40 text-[9px] font-mono text-emerald-300 whitespace-nowrap shadow backdrop-blur-sm">
           ${node.current_occupancy.toLocaleString()} / ${node.capacity.toLocaleString()}
         </div>
       </div>
@@ -62,7 +67,7 @@ const createShelterIcon = (node, isTarget) => {
   });
 };
 
-// High-end minimalist Population Zone Icon
+// Population Zone Icon
 const createZoneIcon = (node, isSelected) => {
   const isEndangered = node.in_hazard_zone;
   return L.divIcon({
@@ -73,8 +78,8 @@ const createZoneIcon = (node, isSelected) => {
           isSelected
             ? 'bg-sky-500 text-slate-950 ring-4 ring-sky-400/40 shadow-lg shadow-sky-500/50 scale-110'
             : isEndangered
-            ? 'bg-rose-950/90 text-rose-400 border border-rose-500/60 shadow-md shadow-rose-950/40 hover:scale-105'
-            : 'bg-amber-950/90 text-amber-400 border border-amber-500/50 shadow-md shadow-amber-950/40 hover:scale-105'
+            ? 'bg-rose-950/90 text-rose-400 border border-rose-500/60 shadow-md shadow-rose-950/40 hover:scale-110'
+            : 'bg-amber-950/90 text-amber-400 border border-amber-500/50 shadow-md shadow-amber-950/40 hover:scale-110'
         }">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -118,10 +123,11 @@ export default function MapView({
   onSelectSource,
   onToggleRoad,
   onMapClick,
-  isPlacingDisaster,
+  activeTool = 'inspect',
+  setActiveTool,
   activeStep
 }) {
-  const center = graph?.center || { lat: 13.0827, lng: 80.2707, zoom: 13 };
+  const nodes = graph?.nodes || [];
 
   const activePathEdgesSet = useMemo(() => {
     const s = new Set();
@@ -151,23 +157,62 @@ export default function MapView({
   }
 
   const nodesMap = {};
-  graph.nodes.forEach(n => { nodesMap[n.id] = n; });
+  nodes.forEach(n => { nodesMap[n.id] = n; });
+
+  const toolLabels = {
+    inspect: 'Inspect Mode (Click roads to toggle block/open)',
+    cut_road: 'Road Cutter Tool (Click any road to sever/open)',
+    add_zone: 'Add Evacuation Zone (Click on map to place people)',
+    add_shelter: 'Add Safe Bunker (Click on map to place shelter)',
+    drop_hazard: 'Deploy Hazard (Click on map to drop disaster)'
+  };
 
   return (
     <div className="relative w-full h-full dark-map-tiles select-none">
+      {/* Interactive Tool Banner in Top-Center of Map */}
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-[400] flex items-center gap-1.5 glass-panel rounded-full p-1.5 shadow-2xl border border-white/10">
+        {[
+          { id: 'inspect', label: 'Inspect', icon: Crosshair },
+          { id: 'cut_road', label: 'Cut Road', icon: Scissors, color: 'text-rose-400' },
+          { id: 'add_zone', label: '+ Zone', icon: Users, color: 'text-amber-400' },
+          { id: 'add_shelter', label: '+ Shelter', icon: Home, color: 'text-emerald-400' },
+          { id: 'drop_hazard', label: '+ Hazard', icon: Flame, color: 'text-blue-400' }
+        ].map(tool => {
+          const Icon = tool.icon;
+          const isActive = activeTool === tool.id;
+          return (
+            <button
+              key={tool.id}
+              onClick={() => setActiveTool(tool.id)}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition ${
+                isActive
+                  ? 'bg-sky-500 text-slate-950 shadow-md font-bold'
+                  : 'text-zinc-300 hover:text-white hover:bg-white/10'
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span>{tool.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Tool Action Hint Banner */}
+      {activeTool !== 'inspect' && (
+        <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[400] bg-sky-500/90 text-slate-950 font-bold text-xs px-4 py-1 rounded-full shadow-lg border border-white/20 animate-bounce">
+          🎯 {toolLabels[activeTool]}
+        </div>
+      )}
+
       <MapContainer
-        center={[center.lat, center.lng]}
-        zoom={center.zoom || 13}
+        center={[13.0450, 80.2200]}
+        zoom={12}
         className="w-full h-full"
         zoomControl={false}
       >
-        <MapViewController center={center} zoom={center.zoom} />
-        <MapClickHandler onMapClick={onMapClick} isPlacingDisaster={isPlacingDisaster} />
+        <MapBoundsController nodes={nodes} />
+        <MapClickHandler onMapClick={onMapClick} activeTool={activeTool} />
 
-        {/* 
-          Standard OpenStreetMap tiles with high-contrast cartographic dark mode.
-          100% FREE, NO API KEY REQUIRED, NO WATERMARKS!
-        */}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -190,7 +235,6 @@ export default function MapView({
 
           return (
             <React.Fragment key={disaster.id || idx}>
-              {/* Outer hazard boundary */}
               <Circle
                 center={[disaster.lat, disaster.lng]}
                 radius={radiusMeters}
@@ -217,7 +261,6 @@ export default function MapView({
                 </Popup>
               </Circle>
 
-              {/* Epicenter core */}
               <Circle
                 center={[disaster.lat, disaster.lng]}
                 radius={radiusMeters * 0.25}
@@ -248,28 +291,27 @@ export default function MapView({
           const isBottleneck = bottleneckEdgesSet.has(edge.id);
           const isStepHighlighted = highlightedEdges.includes(edge.id);
 
-          // Sleek clean styling
-          let polyColor = '#334155'; // Clean slate
+          let polyColor = '#334155';
           let weight = 2.5;
-          let opacity = 0.6;
+          let opacity = 0.65;
           let dashArray = undefined;
 
           if (isBlocked) {
-            polyColor = '#f43f5e'; // Rose red for severed
-            weight = 3.5;
+            polyColor = '#f43f5e';
+            weight = 4;
             opacity = 0.95;
             dashArray = '5, 7';
           } else if (isBottleneck) {
-            polyColor = '#f59e0b'; // Amber bottleneck
+            polyColor = '#f59e0b';
             weight = 5;
             opacity = 1.0;
           } else if (isStepHighlighted) {
-            polyColor = '#ec4899'; // Traversal highlight
+            polyColor = '#ec4899';
             weight = 4.5;
             opacity = 1.0;
           } else if (isActivePath) {
-            polyColor = '#38bdf8'; // Active evacuation corridor neon sky blue
-            weight = 4.5;
+            polyColor = '#38bdf8';
+            weight = 5;
             opacity = 1.0;
           }
 
@@ -308,8 +350,8 @@ export default function MapView({
                       &bull; Saturated Capacity Bottleneck
                     </div>
                   )}
-                  <div className="text-[10px] text-slate-400 italic pt-0.5">
-                    Click to toggle corridor status
+                  <div className="text-[10px] text-sky-400 italic pt-0.5 font-bold">
+                    [Click to {isBlocked ? 'OPEN' : 'SEVER'} this road]
                   </div>
                 </div>
               </Tooltip>
@@ -317,8 +359,8 @@ export default function MapView({
           );
         })}
 
-        {/* Nodes (Shelters, Population Zones, Junctions) */}
-        {(graph.nodes || []).map((node) => {
+        {/* Nodes (Shelters, Zones, Junctions) */}
+        {nodes.map((node) => {
           const isSelected = selectedSourceId === node.id;
           const isVisited = visitedSet.has(node.id);
           const isFrontier = frontierSet.has(node.id);
@@ -391,7 +433,6 @@ export default function MapView({
                         <span>Available Beds:</span>
                         <span className="font-mono">{Math.max(0, node.capacity - node.current_occupancy).toLocaleString()}</span>
                       </div>
-                      {/* Meter bar */}
                       <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
                         <div
                           className="bg-emerald-500 h-full rounded-full transition-all"
@@ -407,7 +448,7 @@ export default function MapView({
         })}
       </MapContainer>
 
-      {/* Modern floating legend in bottom-left */}
+      {/* Cartographic Legend */}
       <div className="absolute bottom-4 left-4 z-[400] glass-panel rounded-xl px-3.5 py-2.5 text-[11px] shadow-2xl pointer-events-auto border border-white/10 hidden md:block">
         <div className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider mb-1.5">
           Cartographic Legend

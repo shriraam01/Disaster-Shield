@@ -166,6 +166,25 @@ class CityGraph:
             # We add reference so traversal knows reverse path
             self.adj[edge.target].append(edge)
 
+    def add_custom_node(self, node: Node, connect_nearest: int = 2):
+        """Adds a custom node and connects it to the nearest existing nodes."""
+        self.add_node(node)
+        candidates = [n for n in self.nodes.values() if n.id != node.id]
+        candidates.sort(key=lambda n: haversine_distance(node.lat, node.lng, n.lat, n.lng))
+        for neighbor in candidates[:connect_nearest]:
+            dist = max(0.4, haversine_distance(node.lat, node.lng, neighbor.lat, neighbor.lng))
+            edge_id = f"E_{node.id}_{neighbor.id}"
+            edge = Edge(
+                edge_id=edge_id,
+                source=node.id,
+                target=neighbor.id,
+                distance_km=round(dist, 2),
+                capacity_flow=2200,
+                status="open",
+                bidirectional=True
+            )
+            self.add_edge(edge)
+
     def get_shelters(self) -> List[Node]:
         return [node for node in self.nodes.values() if node.type == "shelter"]
 
